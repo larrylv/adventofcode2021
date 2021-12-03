@@ -3,27 +3,13 @@
 require 'set'
 
 def get_gamma(lines)
-  rotated_matrix = []
-
-  (0...lines[0].size).each do |idx|
-    rotated_matrix[idx] = []
-    lines.each { |line| rotated_matrix[idx] << line[idx] }
-  end
-
-  (0...lines[0].size).inject("") do |gamma, idx|
-    if rotated_matrix[idx].count {|c| c == "0"} > lines.size / 2
-      gamma << "0"
-    else
-      gamma << "1"
-    end
-    gamma
-  end
+  (0...lines[0].size).map do |idx|
+    (lines.map {|line| line[idx]}.count{|c| c == "0"} > lines.size / 2) ? "0" : "1"
+  end.join("")
 end
 
 def get_epsilon(gamma)
-  xor_str = "1" * gamma.size
-
-  (xor_str.to_i(2) ^ gamma.to_i(2)).to_s(2).rjust(gamma.size, "0")
+  (("1" * gamma.size).to_i(2) ^ gamma.to_i(2)).to_s(2).rjust(gamma.size, "0")
 end
 
 # part 1
@@ -33,11 +19,9 @@ puts gamma.to_i(2) * get_epsilon(gamma).to_i(2)
 
 # part 2
 def get_rating_value(rating_type, lines)
-  set = Set.new
-  lines.each { |line| set.add(line) }
-  str_size = lines[0].size
+  set = Set.new(lines)
 
-  (0...str_size).each do |idx|
+  (0...lines[0].size).each do |idx|
     eligible_lines = set.to_a
     rating_value = get_gamma(eligible_lines)
     rating_value = get_epsilon(rating_value) if rating_type == "epsilon"
