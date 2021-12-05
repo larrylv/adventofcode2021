@@ -1,39 +1,23 @@
 #!/usr/bin/env ruby
 
 def mark_map(map, x1, y1, x2, y2)
+  x_min, x_max = [x1, x2].min, [x1, x2].max
+  y_min, y_max = [y1, y2].min, [y1, y2].max
   if x1 == x2
-    y_min = [y1, y2].min
-    y_max = [y1, y2].max
-    (y_min..y_max).each do |y|
-      map[x1][y] ||= 0
-      map[x1][y] += 1
-    end
+    (y_min..y_max).each { |y| map[x1][y] += 1 }
   elsif y1 == y2
-    x_min = [x1, x2].min
-    x_max = [x1, x2].max
-    (x_min..x_max).each do |x|
-      map[x][y1] ||= 0
-      map[x][y1] += 1
-    end
+    (x_min..x_max).each { |x| map[x][y1] += 1 }
   else # part 2
-    x_min = [x1, x2].min
-    x_max = [x1, x2].max
     if (x1 < x2 && y1 < y2) || (x1 > x2 && y1 > y2)
-      (x_min..x_max).each do |x|
-        map[x][[y1, y2].min+(x-x_min)] ||= 0
-        map[x][[y1, y2].min+(x-x_min)] += 1
-      end
+      (x_min..x_max).each_with_index { |x, idx| map[x][y_min+idx] += 1 }
     else
-      (x_min..x_max).each do |x|
-        map[x][[y1, y2].max-(x-x_min)] ||= 0
-        map[x][[y1, y2].max-(x-x_min)] += 1
-      end
+      (x_min..x_max).each_with_index { |x, idx| map[x][y_max-idx] += 1 }
     end
   end
 end
 
 lines = File.readlines(ARGV[0]).map(&:strip)
-map = Hash.new {|h, k| h[k] = {}}
+map = Hash.new {|h, k| h[k] = Hash.new {|h2, k2| h2[k2] = 0}}
 lines.each do |line|
   x1_y1, x2_y2 = line.split(" -> ")
   x1, y1 = x1_y1.split(",").map(&:to_i)
