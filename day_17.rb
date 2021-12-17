@@ -65,8 +65,8 @@ p y_min.abs * (y_min.abs - 1) / 2
 #
 # x will stop moving once velocity is 0, and when that happens,
 # x position will be `(x_velocity + 1) * x_velocity / 2`.
-# So `x_velocity` has to be big enough (>= target_x_min) so that the above
-# value could fall into the target area.
+# So `x_velocity` has to be big enough so that the above value could fall into
+# the target area (>= target_x_min).
 def find_min_x_velocity(target_x_min)
   i = 0
   while true
