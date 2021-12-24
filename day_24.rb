@@ -164,6 +164,7 @@ p "z14: #{h["z"]}"
 # "z5: (((z4 / 26) * ((25 * ((((z4 % 26) + -7) == w4 ? 1 : 0) == 0 ? 1 : 0)) + 1)) + ((w4 + 15) * ((((z4 % 26) + -7) == w4 ? 1 : 0) == 0 ? 1 : 0)))"
 # "z6: ((z5 * 26) + (w5 + 2))"
 # "z7: (((z6 / 26) * ((25 * ((((z6 % 26) + -1) == w6 ? 1 : 0) == 0 ? 1 : 0)) + 1)) + ((w6 + 11) * ((((z6 % 26) + -1) == w6 ? 1 : 0) == 0 ? 1 : 0)))"
+#      (((z5     ) * ((25 * ((((w5 + 2 ) + -1) == w6 ? 1 : 0) == 0 ? 1 : 0)) + 1)) + ((w6 + 11) * ((((w5 + 2 ) + -1) == w6 ? 1 : 0) == 0 ? 1 : 0)))"
 # "z8: (((z7 / 26) * ((25 * ((((z7 % 26) + -16) == w7 ? 1 : 0) == 0 ? 1 : 0)) + 1)) + ((w7 + 15) * ((((z7 % 26) + -16) == w7 ? 1 : 0) == 0 ? 1 : 0)))"
 # "z9: ((z8 * 26) + (w8 + 10))"
 # "z10: (((z9 / 26) * ((25 * ((((z9 % 26) + -15) == w9 ? 1 : 0) == 0 ? 1 : 0)) + 1)) + ((w9 + 2) * ((((z9 % 26) + -15) == w9 ? 1 : 0) == 0 ? 1 : 0)))"
@@ -176,19 +177,133 @@ p "z14: #{h["z"]}"
 
 # z14 == 0
 
+# no way any z could be negative, so:
+# with z14 being 0, its lhs and rhs for the `add` op should be 0:
+#   * z13 < 26
+#   * z13 % 26 == w13 -> z13 in range (1..9)
+#
+# for z13, its right side of the `add` op which is `(w12 + 15) multiply sth` has to be 0:
+#   * w11 - 4 = w12 (yay!)
+# for z13, its left side of the `add` op needs to be in range (1..9), and given z11 is positive,
+#   * `((25 * ((((w11     ) + -4) == w12 ? 1 : 0) == 0 ? 1 : 0)) + 1)` has to be 1
+#   * which confirmed `w11 - 4 = w12`
+#
+# this also means z13 = z11
+#   z13 % 26 == w13
+#   z11 % 26 == w10
+# so w13 == w10 (yay!!)
+#
+# this also means z11 < 26, which means z10 == 0
+#   lhs: z8 == 0
+#   rhs: w8 - 5 == w9 (yay!!!)
+#
+# with z8 being 0,
+#   lhs: z7 < 26
+#   rhs: z7 - 16 == w7, -> z7 in range (17..25)
 
-# z14 -> z13/w13
-# z13 -> z11/w11/w12
-# z11 -> z10/w10
-# z10 -> z8/w8/w9
-# z8  -> z7/w7
-# z7  -> z6/w6
-# z6  -> z5/w5
-# z5  -> z4/w4
-# z4  -> z2/w2/w3
-# z3  -> z2/w2
-# z2  -> z1/w1
-# z1  -> w0
+# z7 in range (17..25),
+#   option 1. z5 is 0, and (w5 + 1 != w6), and w6 in range (6..9)
+#     * z7 == w6 + 11
+#     * so, w6 - 5 == w7
+#     goto: 27A // this is not happening, cut the search (see 27A)
+#   option 2. z5 is not 0, but (w5 + 1 == w6), and z5 in range (17..25)
+#     * w5 + 1 == w6 (yay!!!!)
+#     goto: Z7_B // this is the only option
+#
 
+# 27A:
+#   z5 == 0
+#     rhs: z4 % 26 - 7 == w4
+#     lhs: z4 / 26 == 0
+#     so, z4 - 7 == w4 ------ no way this can be true, as z4 is guarantteed to be much bigger than 26
+#
+
+# Z7B:
+#   z5 in range (17..25)
+#     given z4 is guarantteed to be bigger than 26, so lhs `z4/26` can't be 0.
+#       so, z4 % 26 - 7 == w4
+#
+#     z4 % 26:
+#     option 1: w2 + 6 == w3 (yay!!!!!)
+#       z4 % 26 == z2 % 26 == w1 + 12, so w1 + 12 - 7 == w4 (yay!!!!!)
+#     option 2: w2 + 6 != w3 ------ (this proves not possible, but i'm too lazy to capture details)
+
+def execute_lines(lines, h)
+  w_idx = -1
+  lines.each_with_index do |line, idx|
+    op, a, b = line.split(" ")
+    if op == "inp"
+      w_idx += 1
+      next
+    end
+
+
+    a = "w[#{w_idx}]" if a == "w"
+    b = "w[#{w_idx}]" if b == "w"
+
+    execute(op, a, b, h, w_idx)
+  end
+end
+
+
+result = []
+
+(1..9).each do |m_0|
+  (1..4).each do |m_1|
+    m_4 = m_1 + 5
+    (1..3).each do |m_2|
+      m_3 = m_2 + 6
+      (1..8).each do |m_5|
+        m_6 = m_5 + 1
+        (1..9).each do |m_7|
+          (6..9).each do |m_8|
+            m_9 = m_8 - 5
+            (1..9).each do |m_10|
+              m_13 = m_10
+              (5..9).each do |m_11|
+                m_12 = m_11 - 4
+
+                model_number = [
+                  m_0,
+                  m_1,
+                  m_2,
+                  m_3,
+                  m_4,
+                  m_5,
+                  m_6,
+                  m_7,
+                  m_8,
+                  m_9,
+                  m_10,
+                  m_11,
+                  m_12,
+                  m_13,
+                ].map(&:to_s)
+                h = {
+                  "x" => "0",
+                  "y" => "0",
+                  "z" => "0",
+                }
+                model_number.each_with_index do |n, idx|
+                  h["w#{idx}"] = n
+                end
+                execute_lines(lines, h)
+                if h["z"].to_s == "0"
+                  result << model_number.join("")
+                  p 'found'
+                  p result.last
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+p result.max
 
 # part two
+
+p result.min
